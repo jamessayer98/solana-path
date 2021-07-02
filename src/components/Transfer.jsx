@@ -36,30 +36,40 @@ const Transfer = ({ keypair }) => {
   
     const url = getNodeRpcURL();
     const connection = new Connection(url, { wsEndpoint: getNodeWsURL() });
-
+  
     const fromPubKey = new PublicKey(values.from);
     const toPubKey = new PublicKey(toAddress);
-
-    const instructions = SystemProgram.transfer({
-      fromPubkey: fromPubKey,
-      toPubkey: toPubKey,
-      lamports: amountNumber,
-    });
-
+  
     const signers = [
       {
         publicKey: fromPubKey,
         secretKey: new Uint8Array(keypair.secretKey)
       }
     ];
-
+  
+    const instructions = SystemProgram.transfer({
+      fromPubkey: fromPubKey,
+      toPubkey: toPubKey,
+      lamports: amountNumber,
+    });
+    
+    const transaction = new Transaction().add(instructions);
+  
     setTxSignature(null);
     setFetching(true);
-
-    // Create a transaction
-    // Add instructions
-    // Call sendAndConfirmTransaction
-    // On success, call setTxSignature and setFetching
+  
+    sendAndConfirmTransaction(
+      connection,
+      transaction,
+      signers,
+    ).then((signature) => {
+      setTxSignature(signature)
+      setFetching(false);
+    })
+    .catch((err) => {
+      console.log(err);
+      setFetching(false);
+    })
   };
 
   const explorerUrl = getTxExplorerURL(txSignature);
